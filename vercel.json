@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "builds": [
     {
       "src": "frontend/package.json",
@@ -9,7 +10,21 @@
     }
   ],
   "routes": [
-    { "src": "/", "dest": "/frontend/dist/index.html" },
-    { "src": "/(.*)", "dest": "/frontend/dist/$1" }
+    {
+      "src": "/_next/static/(.*)",
+      "dest": "/_next/static/$1"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }
