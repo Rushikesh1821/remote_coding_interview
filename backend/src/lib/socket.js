@@ -9,10 +9,15 @@ const sessionState = {};
 export const initializeSocket = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: [
+    process.env.CLIENT_URL,                 // for production env
+    "https://remote-interview-platform-bqb6.onrender.com", // deployed frontend
+    "http://localhost:5173",                // local development
+      ].filter(Boolean), // removes undefined values
       credentials: true,
       methods: ["GET", "POST"],
     },
+
     transports: ["websocket", "polling"],
   });
 
