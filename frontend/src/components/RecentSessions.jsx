@@ -10,7 +10,7 @@ function RecentSessions({ sessions, isLoading }) {
           <div className="p-2 bg-gradient-to-br from-accent to-secondary rounded-xl">
             <Clock className="w-5 h-5 text-white" />
           </div>
-          <h2 className="text-2xl font-black">Your Past Sessions</h2>
+          <h2 className="text-2xl font-black">My Sessions</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

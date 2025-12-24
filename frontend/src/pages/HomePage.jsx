@@ -11,6 +11,14 @@ import {
 import { SignInButton } from "@clerk/clerk-react";
 
 function HomePage() {
+  const setDesiredRole = (role) => {
+    try {
+      localStorage.setItem("desiredRole", role);
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-base-100 via-base-200 to-base-300">
       {/* NAVBAR */}
@@ -33,13 +41,26 @@ function HomePage() {
             </div>
           </Link>
 
-          {/* AUTH BTN */}
-          <SignInButton mode="modal">
-            <button className="group px-6 py-3 bg-gradient-to-r from-primary to-secondary rounded-xl text-white font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 flex items-center gap-2">
-              <span>Get Started</span>
-              <ArrowRightIcon className="size-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </SignInButton>
+          {/* AUTH BTN - Role-based login buttons */}
+          <div className="flex gap-3">
+            <SignInButton mode="modal" redirectUrl="/host/dashboard">
+              <button
+                onClick={() => setDesiredRole("host")}
+                className="group px-4 py-2 bg-gradient-to-r from-primary to-secondary rounded-xl text-white font-semibold text-xs shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 flex items-center gap-2"
+              >
+                <span>Login as Host</span>
+              </button>
+            </SignInButton>
+
+            <SignInButton mode="modal" redirectUrl="/participant/dashboard">
+              <button
+                onClick={() => setDesiredRole("participant")}
+                className="group px-4 py-2 bg-base-100 border border-primary/40 rounded-xl text-primary font-semibold text-xs shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 flex items-center gap-2"
+              >
+                <span>Login as Participant</span>
+              </button>
+            </SignInButton>
+          </div>
         </div>
       </nav>
 
@@ -84,17 +105,25 @@ function HomePage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-4">
-              <SignInButton mode="modal">
-                <button className="btn btn-primary btn-lg">
-                  Start Coding Now
+              <SignInButton mode="modal" redirectUrl="/host/dashboard">
+                <button
+                  onClick={() => setDesiredRole("host")}
+                  className="btn btn-primary btn-lg"
+                >
+                  Start as Host
                   <ArrowRightIcon className="size-5" />
                 </button>
               </SignInButton>
 
-              <button className="btn btn-outline btn-lg">
-                <VideoIcon className="size-5" />
-                Watch Demo
-              </button>
+              <SignInButton mode="modal" redirectUrl="/participant/dashboard">
+                <button
+                  onClick={() => setDesiredRole("participant")}
+                  className="btn btn-outline btn-lg"
+                >
+                  Join as Participant
+                  <ArrowRightIcon className="size-5" />
+                </button>
+              </SignInButton>
             </div>
 
             {/* STATS */}

@@ -20,6 +20,12 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    role: {
+      type: String,
+      enum: ["host", "participant"],
+      required: true,
+      default: "participant", // Default role for existing users
+    },
   },
   { timestamps: true } // createdAt, updatedAt
 );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { StreamChat } from "stream-chat";
 import toast from "react-hot-toast";
 import { initializeStreamClient, disconnectStreamClient } from "../lib/stream";
@@ -10,6 +10,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
   const [isInitializingCall, setIsInitializingCall] = useState(true);
+  const hasJoinedRef = useRef(false);
 
   useEffect(() => {
     let videoCall = null;
@@ -19,8 +20,10 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
       if (!session?.callId) return;
       if (!isHost && !isParticipant) return;
       if (session.status === "completed") return;
+      if (hasJoinedRef.current) return; // Prevent duplicate joins
 
       try {
+        hasJoinedRef.current = true;
         const { token, userId, userName, userImage } = await sessionApi.getStreamToken();
 
         const client = await initializeStreamClient(
@@ -35,7 +38,27 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
         setStreamClient(client);
 
         videoCall = client.call("default", session.callId);
-        await videoCall.join({ create: true });
+        
+        // Always join - Stream.io handles duplicate prevention
+        // But check current state first to avoid unnecessary join
+        try {
+          const callState = await videoCall.get();
+          const isAlreadyInCall = callState?.state?.participants?.some(
+            (p) => p.userId === userId
+          );
+          
+          if (!isAlreadyInCall) {
+            console.log("Joining Stream.io call:", session.callId);
+            await videoCall.join({ create: true });
+          } else {
+            console.log("Already in Stream.io call, reusing connection");
+          }
+        } catch (error) {
+          // If get() fails, try joining anyway
+          console.log("Could not get call state, joining:", session.callId);
+          await videoCall.join({ create: true });
+        }
+        
         setCall(videoCall);
 
         const apiKey = import.meta.env.VITE_STREAM_API_KEY;
@@ -66,18 +89,23 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
 
     // cleanup - performance reasons
     return () => {
+      hasJoinedRef.current = false;
       // iife
       (async () => {
         try {
-          if (videoCall) await videoCall.leave();
-          if (chatClientInstance) await chatClientInstance.disconnectUser();
+          if (videoCall) {
+            await videoCall.leave();
+          }
+          if (chatClientInstance) {
+            await chatClientInstance.disconnectUser();
+          }
           await disconnectStreamClient();
         } catch (error) {
           console.error("Cleanup error:", error);
         }
       })();
     };
-  }, [session, loadingSession, isHost, isParticipant]);
+  }, [session?.callId, loadingSession, isHost, isParticipant]);
 
   return {
     streamClient,

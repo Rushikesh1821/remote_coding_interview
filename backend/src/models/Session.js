@@ -1,7 +1,14 @@
 import mongoose from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 
 const sessionSchema = new mongoose.Schema(
   {
+    sessionId: {
+      type: String,
+      required: true,
+      unique: true,
+      default: () => uuidv4(),
+    },
     problem: {
       type: String,
       required: true,
@@ -23,8 +30,8 @@ const sessionSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "completed"],
-      default: "active",
+      enum: ["waiting", "active", "ended"],
+      default: "waiting",
     },
     // stream video call ID
     callId: {
@@ -34,6 +41,9 @@ const sessionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Index for faster lookups by sessionId
+sessionSchema.index({ sessionId: 1 });
 
 const Session = mongoose.model("Session", sessionSchema);
 

@@ -1,13 +1,21 @@
 import { Link, useLocation } from "react-router-dom";
 import { BookOpenIcon, LayoutDashboardIcon, SparklesIcon } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
+import { useUserRole } from "../hooks/useUserRole";
 
 function Navbar() {
   const location = useLocation();
+  const { role } = useUserRole();
 
-  console.log(location);
-
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === "/dashboard") {
+      // Match dashboard routes: /dashboard, /host/dashboard, /participant/dashboard
+      return location.pathname === "/dashboard" || 
+             location.pathname === "/host/dashboard" || 
+             location.pathname === "/participant/dashboard";
+    }
+    return location.pathname === path || location.pathname.startsWith(path + "/");
+  };
 
   return (
     <nav className="bg-base-100/80 backdrop-blur-md border-b border-primary/20 sticky top-0 z-50 shadow-lg">
@@ -48,9 +56,9 @@ function Navbar() {
             </div>
           </Link>
 
-          {/* DASHBORD PAGE LINK */}
+          {/* DASHBOARD PAGE LINK */}
           <Link
-            to={"/dashboard"}
+            to={role === "host" ? "/host/dashboard" : role === "participant" ? "/participant/dashboard" : "/dashboard"}
             className={`px-4 py-2.5 rounded-lg transition-all duration-200 
               ${
                 isActive("/dashboard")

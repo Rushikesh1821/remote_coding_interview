@@ -1,5 +1,6 @@
 import express from "express";
 import { protectRoute } from "../middlewear/protectRoute.js";
+import { requireRole } from "../middlewear/requireRole.js";
 import {
   createSession,
   endSession,
@@ -11,12 +12,17 @@ import {
 
 const router = express.Router();
 
-router.post("/", protectRoute, createSession);
+// Host-only routes
+router.post("/", protectRoute, requireRole(["host"]), createSession);
+router.post("/:id/end", protectRoute, requireRole(["host"]), endSession);
+
+// Participant-only routes
+router.post("/:id/join", protectRoute, requireRole(["participant"]), joinSession);
+
+// Both roles can access these routes
 router.get("/active", protectRoute, getActiveSessions);
 router.get("/my-recent", protectRoute, getMyRecentSessions);
-
+router.get("/by-session-id/:sessionId", protectRoute, getSessionById);
 router.get("/:id", protectRoute, getSessionById);
-router.post("/:id/join", protectRoute, joinSession);
-router.post("/:id/end", protectRoute, endSession);
 
 export default router;
