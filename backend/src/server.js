@@ -102,38 +102,49 @@ app.get("/api/db-status", async (req, res) => {
 });
 
 
-/* Serve React frontend in production */
-if (ENV.NODE_ENV === "production") {
-  // Path from backend/src/server.js -> frontend/dist is ../../frontend/dist
-  const frontendDist = path.join(__dirname, "../../frontend/dist");
-  const indexPath = path.join(frontendDist, "index.html");
-  
-  console.log("📂 __dirname:", __dirname);
-  console.log("📂 frontendDist path:", frontendDist);
-  console.log("📂 index.html path:", indexPath);
-  
-  // Check if frontend build exists
-  import("fs").then((fs) => {
-    if (fs.existsSync(frontendDist)) {
-      console.log("✅ frontend/dist EXISTS");
-      console.log("📄 Contents:", fs.readdirSync(frontendDist));
+/* ============================================================
+   FRONTEND SERVING - FIXED FOR RENDER
+   ============================================================
+   CHANGE: Removed NODE_ENV condition - frontend is now ALWAYS served
+   This ensures "Cannot GET /" is fixed on Render deployments
+   ============================================================ */
+
+// Path from backend/src/server.js -> frontend/dist is ../../frontend/dist
+const frontendDist = path.join(__dirname, "../../frontend/dist");
+const indexPath = path.join(frontendDist, "index.html");
+
+console.log("📂 __dirname:", __dirname);
+console.log("📂 frontendDist path:", frontendDist);
+console.log("📂 index.html path:", indexPath);
+
+// Check if frontend build exists (synchronous for startup clarity)
+import("fs").then((fs) => {
+  if (fs.existsSync(frontendDist)) {
+    console.log("✅ frontend/dist EXISTS");
+    console.log("📄 Contents:", fs.readdirSync(frontendDist));
+    if (fs.existsSync(indexPath)) {
+      console.log("✅ index.html EXISTS");
     } else {
-      console.error("❌ frontend/dist NOT FOUND at:", frontendDist);
+      console.error("❌ index.html NOT FOUND");
+    }
+  } else {
+    console.error("❌ frontend/dist NOT FOUND at:", frontendDist);
+  }
+});
+
+// Serve static files (JS, CSS, images, etc.)
+app.use(express.static(frontendDist));
+
+// SPA fallback: serve index.html for any non-API route
+app.get("*", (req, res) => {
+  console.log("📥 Serving index.html for:", req.url);
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error("❌ Failed to send index.html:", err.message);
+      res.status(500).send("Frontend not found. Check build.");
     }
   });
-  
-  app.use(express.static(frontendDist));
-
-  // Fallback: serve index.html for any non-API route (SPA routing)
-  app.get("*", (req, res) => {
-    res.sendFile(indexPath, (err) => {
-      if (err) {
-        console.error("❌ Failed to send index.html:", err.message);
-        res.status(500).send("Frontend not found. Check build.");
-      }
-    });
-  });
-}
+});
 
 const startServer = async () => {
   try {
