@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
+import { fileURLToPath } from "url";
 import { createServer } from "http";
 import { serve } from "inngest/express";
 import { clerkMiddleware } from "@clerk/express";
@@ -19,7 +20,10 @@ import userRoutes from "./routes/userRoute.js";
 // dotenv is already loaded in ./lib/env.js
 
 const app = express();
-const __dirname = path.resolve();
+
+// ES Module __dirname fix
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // middlewear
 app.use(express.json());
@@ -100,12 +104,14 @@ app.get("/api/db-status", async (req, res) => {
 
 /* Serve React frontend in production */
 if (ENV.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  // Path from backend/src/server.js -> frontend/dist is ../../frontend/dist
+  const frontendDist = path.join(__dirname, "../../frontend/dist");
+  
+  app.use(express.static(frontendDist));
 
+  // Fallback: serve index.html for any non-API route (SPA routing)
   app.get("*", (req, res) => {
-    res.sendFile(
-      path.join(__dirname, "../frontend/dist/index.html")
-    );
+    res.sendFile(path.join(frontendDist, "index.html"));
   });
 }
 
