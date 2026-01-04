@@ -102,69 +102,36 @@ app.get("/api/db-status", async (req, res) => {
 });
 
 
-/* ============================================================
-   FRONTEND SERVING - FIXED FOR RENDER
-   ============================================================
-   CHANGE: Removed NODE_ENV condition - frontend is now ALWAYS served
-   This ensures "Cannot GET /" is fixed on Render deployments
-   ============================================================ */
+// API only - frontend is deployed separately
 
-// Path from backend/src/server.js -> frontend/dist is ../../frontend/dist
-const frontendDist = path.join(__dirname, "../../frontend/dist");
-const indexPath = path.join(frontendDist, "index.html");
+// For Vercel serverless deployment
+export default async function handler(req, res) {
+  await connectDB();
+  return app(req, res);
+}
 
-console.log("📂 __dirname:", __dirname);
-console.log("📂 frontendDist path:", frontendDist);
-console.log("📂 index.html path:", indexPath);
+// For local development
+if (process.env.NODE_ENV !== "production") {
+  const startServer = async () => {
+    try {
+      await connectDB();
 
-// Check if frontend build exists (synchronous for startup clarity)
-import("fs").then((fs) => {
-  if (fs.existsSync(frontendDist)) {
-    console.log("✅ frontend/dist EXISTS");
-    console.log("📄 Contents:", fs.readdirSync(frontendDist));
-    if (fs.existsSync(indexPath)) {
-      console.log("✅ index.html EXISTS");
-    } else {
-      console.error("❌ index.html NOT FOUND");
+      // Create HTTP server for Socket.io
+      const httpServer = createServer(app);
+
+      // Initialize Socket.io
+      initializeSocket(httpServer);
+
+      httpServer.listen(PORT, () => {
+        console.log("🚀 Server is running on port:", PORT);
+        console.log("🔌 Socket.io initialized");
+      });
+
+    } catch (error) {
+      console.error("💥 Error starting the server:", error);
+      process.exit(1);
     }
-  } else {
-    console.error("❌ frontend/dist NOT FOUND at:", frontendDist);
-  }
-});
+  };
 
-// Serve static files (JS, CSS, images, etc.)
-app.use(express.static(frontendDist));
-
-// SPA fallback: serve index.html for any non-API route
-app.get("*", (req, res) => {
-  console.log("📥 Serving index.html for:", req.url);
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error("❌ Failed to send index.html:", err.message);
-      res.status(500).send("Frontend not found. Check build.");
-    }
-  });
-});
-
-const startServer = async () => {
-  try {
-    await connectDB();
-
-    // Create HTTP server for Socket.io
-    const httpServer = createServer(app);
-
-    // Initialize Socket.io
-    initializeSocket(httpServer);
-
-    httpServer.listen(PORT, () => {
-      console.log("🚀 Server is running on port:", PORT);
-      console.log("🔌 Socket.io initialized");
-    });
-
-  } catch (error) {
-    console.error("💥 Error starting the server:", error);
-    process.exit(1);
-  }
-};
-
-startServer();
+  startServer();
+}
