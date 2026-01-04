@@ -1,0 +1,9 @@
+{
+  "outputDirectory": "dist",
+  "routes": [
+    {
+      "src": "/[^.]*$",
+      "dest": "/index.html"
+    }
+  ]
+}
