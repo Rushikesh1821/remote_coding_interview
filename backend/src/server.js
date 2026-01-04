@@ -104,16 +104,7 @@ app.get("/api/db-status", async (req, res) => {
 
 // API only - frontend is deployed separately
 
-// For Vercel serverless deployment
-export default async function handler(req, res) {
-  try {
-    await connectDB();
-    return app(req, res);
-  } catch (error) {
-    console.error('Serverless function error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}
+export { app };
 
 // For local development
 if (process.env.NODE_ENV !== "production") {
