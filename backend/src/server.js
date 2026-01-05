@@ -45,7 +45,7 @@ app.get("/keep-alive", (req, res) => {
 });
 
 setInterval(() => {
-  fetch("https://remote-coding-interviews.onrender.com/keep-alive")
+  fetch("https://remote-coding-interview.onrender.com/keep-alive")
     .then(() => console.log("Pinged self to stay alive"))
     .catch((error) => console.error("Ping failed:", error));
 }, 5 * 60 * 1000); // every 5 minutes
